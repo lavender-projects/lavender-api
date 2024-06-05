@@ -1,4 +1,5 @@
 import de.honoka.gradle.buildsrc.MavenPublish.setupVersionAndPublishing
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
@@ -27,7 +28,7 @@ dependencies {
 }
 
 tasks {
-    compileJava {
+    withType<KotlinCompile> {
         dependsOn(":jvm:lavender-api:publish")
     }
 }
