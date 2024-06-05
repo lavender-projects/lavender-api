@@ -1,22 +1,26 @@
 import de.honoka.gradle.buildsrc.MavenPublish.defineCheckVersionOfProjectsTask
-import de.honoka.gradle.buildsrc.MavenPublish.setPublishingRepositories
 
+@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     `maven-publish`
-    id("io.spring.dependency-management") version "1.0.11.RELEASE" apply false
+    alias(libs.plugins.dependency.management)
 }
 
 allprojects {
     group = "de.honoka.lavender"
 }
 
-version = "1.0.0"
+version = libs.versions.root.get()
 
 subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "io.spring.dependency-management")
 
-    setPublishingRepositories()
+    publishing {
+        repositories {
+            mavenLocal()
+        }
+    }
 }
 
 defineCheckVersionOfProjectsTask()

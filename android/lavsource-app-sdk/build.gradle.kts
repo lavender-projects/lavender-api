@@ -1,7 +1,6 @@
-import de.honoka.gradle.buildsrc.MavenPublish.setupAndroidAarVersionAndPublishing
-import de.honoka.gradle.buildsrc.Versions
+import de.honoka.gradle.buildsrc.MavenPublish.setupVersionAndPublishing
 
-setupAndroidAarVersionAndPublishing("1.0.0-dev")
+setupVersionAndPublishing(libs.versions.lavsource.app.sdk.get(), true)
 
 android {
     namespace = "${project.group}.sdk.android.lavsource"
@@ -9,13 +8,13 @@ android {
 
 dependencies {
     listOf(
-        "de.honoka.lavender:lavender-api:${Versions.Android.LavsourceAppSdk.lavenderApi}",
-        "de.honoka.sdk:honoka-android-utils:${Versions.Android.LavsourceAppSdk.honokaAndroidUtils}"
+        libs.android.lavender.api,
+        libs.honoka.android.utils
     ).forEach {
         implementation(it)
         api(it)
     }
-    implementation("de.honoka.sdk:honoka-framework-utils:1.0.4")
+    implementation(libs.android.honoka.framework.utils)
     implementation("cn.hutool:hutool-all:5.8.18")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

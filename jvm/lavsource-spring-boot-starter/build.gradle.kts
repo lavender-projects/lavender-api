@@ -1,20 +1,15 @@
 import de.honoka.gradle.buildsrc.MavenPublish.setupVersionAndPublishing
-import de.honoka.gradle.buildsrc.Versions
 
+@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
-    @Suppress("RemoveRedundantQualifierName")
-    val versions = de.honoka.gradle.buildsrc.Versions.Jvm
-    //plugins
-    kotlin("plugin.spring") version versions.kotlin
+    alias(libs.plugins.kotlin.spring.plugin)
 }
 
-setupVersionAndPublishing("1.0.1-dev")
+setupVersionAndPublishing(libs.versions.lavsource.spring.boot.starter.get())
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:${
-            Versions.Jvm.LavenderDataSourceStarter.springBootVersion
-        }")
+        mavenBom(libs.spring.boot.dependencies.get().toString())
     }
 }
 
@@ -24,12 +19,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-configuration-processor".also {
         annotationProcessor(it)
     })
-    implementation("de.honoka.lavender:lavender-api:${
-        Versions.Jvm.LavenderDataSourceStarter.lavenderApiVersion
-    }".also {
+    implementation(libs.jvm.lavender.api.also {
         api(it)
     })
-    implementation("de.honoka.sdk:honoka-framework-utils:1.0.3")
+    implementation(libs.jvm.honoka.framework.utils)
     implementation("org.hibernate.validator:hibernate-validator")
 }
 

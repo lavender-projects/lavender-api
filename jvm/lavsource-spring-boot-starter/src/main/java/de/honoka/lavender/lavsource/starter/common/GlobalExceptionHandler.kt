@@ -3,6 +3,7 @@ package de.honoka.lavender.lavsource.starter.common
 import de.honoka.lavender.lavsource.starter.LavsourceStarterProperties
 import de.honoka.sdk.util.framework.web.ApiException
 import de.honoka.sdk.util.framework.web.ApiResponse
+import org.apache.catalina.connector.ClientAbortException
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.HttpStatus
@@ -13,7 +14,7 @@ import javax.servlet.http.HttpServletResponse
 
 @ConditionalOnProperty(
     prefix = LavsourceStarterProperties.PREFIX,
-    name = [ "enableDefaultGlobalExceptionHandler" ],
+    name = ["enableDefaultGlobalExceptionHandler"],
     havingValue = "true",
     matchIfMissing = true
 )
@@ -35,4 +36,7 @@ class GlobalExceptionHandler {
         }
         return responseBody
     }
+
+    @ExceptionHandler(ClientAbortException::class)
+    fun handleClientAbort() {}
 }

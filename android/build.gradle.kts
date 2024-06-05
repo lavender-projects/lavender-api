@@ -1,13 +1,15 @@
+import com.android.build.gradle.internal.api.DefaultAndroidSourceDirectorySet
+import de.honoka.gradle.buildsrc.MavenPublish.defineAarSourcesJarTask
+
+@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
-    val versions = de.honoka.gradle.buildsrc.Versions.Android
-    //plugins
-    id("com.android.library") version versions.libraryPlugin
-    kotlin("android") version versions.kotlin
+    alias(libs.plugins.android.gradle.plugin)
+    alias(libs.plugins.android.kotlin)
 }
 
 android {
     namespace = "${project.group}.sdk.android"
-    compileSdk = 33
+    compileSdk = libs.versions.android.sdk.compile.get().toInt()
 }
 
 subprojects {
@@ -15,10 +17,12 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.android")
 
     android {
-        compileSdk = 33
+        val libs = rootProject.libs
+
+        compileSdk = libs.versions.android.sdk.compile.get().toInt()
 
         defaultConfig {
-            minSdk = 26
+            minSdk = libs.versions.android.sdk.min.get().toInt()
             testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
             consumerProguardFiles("consumer-rules.pro")
         }
@@ -29,6 +33,11 @@ subprojects {
                 @Suppress("UnstableApiUsage")
                 proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             }
+        }
+
+        sourceSets["main"].java {
+            val sourceDirSet = if(this is DefaultAndroidSourceDirectorySet) srcDirs else setOf()
+            defineAarSourcesJarTask(sourceDirSet)
         }
 
         compileOptions {

@@ -1,54 +1,49 @@
 package de.honoka.gradle.buildsrc
 
-import org.gradle.api.Action
 import org.gradle.api.Project
-import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.artifacts.Dependency
 import org.gradle.api.publish.maven.MavenPom
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.maven
+import java.io.File
+import java.nio.file.Paths
 
 object MavenPublish {
 
+    private lateinit var rootProject: Project
+
     private val projectsWillPublish = ArrayList<Project>()
 
-    private fun Project.publishing(configure: Action<PublishingExtension>) {
-        extensions.configure("publishing", configure)
-    }
-
-    fun Project.setupVersionAndPublishing(version: String) {
+    fun Project.setupVersionAndPublishing(version: String, isAndroid: Boolean = false) {
         val project = this
         this.version = version
         publishing {
-            publications {
-                create<MavenPublication>("maven") {
-                    groupId = group as String
-                    artifactId = project.name
-                    this.version = version
-                    from(components["java"])
-                }
+            repositories {
+                val isReleaseVersion = version.isReleaseVersion()
+                val isDevelopmentRepository = properties["isDevelopmentRepository"]?.toString() == "true"
+                if(isReleaseVersion == isDevelopmentRepository) return@repositories
+                val remoteUrl = properties["remoteMavenRepositoryUrl"]?.toString() ?: return@repositories
+                maven(remoteUrl)
             }
-        }
-        projectsWillPublish.add(this)
-    }
-
-    fun Project.setupAndroidAarVersionAndPublishing(version: String) {
-        val project = this
-        this.version = version
-        publishing {
             publications {
                 create<MavenPublication>("maven") {
                     groupId = group as String
                     artifactId = project.name
                     this.version = version
-                    pom.setAndroidAarPomDependencies(project)
-                    afterEvaluate {
-                        val artifacts = listOf(
-                            tasks["bundleReleaseAar"],
-                            tasks["releaseSourcesJar"]
-                        )
-                        setArtifacts(artifacts)
+                    if(isAndroid) {
+                        pom.setAndroidAarPomDependencies(project)
+                        afterEvaluate {
+                            val artifacts = listOf(
+                                tasks["bundleReleaseAar"],
+                                tasks["sourcesJar"]
+                            )
+                            setArtifacts(artifacts)
+                        }
+                    } else {
+                        from(components["java"])
                     }
                 }
             }
@@ -87,23 +82,18 @@ object MavenPublish {
         }
     }
 
-    private fun checkVersionOfProjects() {
-        var passed = true
-        println("Versions:\n")
-        projectsWillPublish.forEach {
-            if(!passed) return@forEach
-            //若project未设置version，则这里取到的version值为unspecified
-            println("${it.name}=${it.version}")
-            passed = it.version.toString().lowercase().run {
-                !(isEmpty() || this == "unspecified" || contains("dev"))
-            }
+    fun Project.defineAarSourcesJarTask(sourceDirSet: Set<File>) {
+        tasks.register("sourcesJar", Jar::class.java) {
+            group = "build"
+            destinationDirectory.set(Paths.get(buildDir.absolutePath, "libs").toFile())
+            archiveFileName.set("${project.name}-$version-sources.jar")
+            archiveClassifier.set("sources")
+            from(*sourceDirSet.toTypedArray())
         }
-        println("\nResults:\n")
-        println("results.passed=$passed")
-        println()
     }
 
     fun Project.defineCheckVersionOfProjectsTask() {
+        this@MavenPublish.rootProject = rootProject
         tasks.register("checkVersionOfProjects") {
             group = "publishing"
             doLast {
@@ -112,14 +102,35 @@ object MavenPublish {
         }
     }
 
-    fun Project.setPublishingRepositories() {
-        publishing {
-            repositories {
-                mavenLocal()
-                if(hasProperty("remoteMavenRepositoryUrl")) {
-                    maven(properties["remoteMavenRepositoryUrl"]!!)
-                }
-            }
+    private fun checkVersionOfProjects() {
+        var passed = true
+        val dependencies = HashSet<Dependency>()
+        println("Versions:\n")
+        listOf(rootProject, *projectsWillPublish.toTypedArray()).forEach {
+            if(!passed) return@forEach
+            //若project未设置version，则这里取到的version值为unspecified
+            println("${it.name}=${it.version}")
+            dependencies.addAll(it.rawDependencies)
+            passed = it.version.isReleaseVersion()
         }
+        if(passed) passed = checkVersionOfDependencies(dependencies)
+        println("\nResults:\n")
+        println("results.passed=$passed")
+        println()
+    }
+
+    private fun Any?.isReleaseVersion(): Boolean = toString().lowercase().run {
+        !(isEmpty() || this == "unspecified" || contains("dev"))
+    }
+
+    private fun checkVersionOfDependencies(dependencies: Set<Dependency>): Boolean {
+        var passed = true
+        println("\nDependencies:\n")
+        dependencies.forEach {
+            if(!passed) return@forEach
+            println("${it.group}:${it.name}=${it.version}")
+            passed = it.version.isReleaseVersion()
+        }
+        return passed
     }
 }

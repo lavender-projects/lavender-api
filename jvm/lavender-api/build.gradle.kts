@@ -1,11 +1,10 @@
 import de.honoka.gradle.buildsrc.MavenPublish.setupVersionAndPublishing
-import de.honoka.gradle.buildsrc.Versions
 
-setupVersionAndPublishing("1.0.1-dev")
+setupVersionAndPublishing(libs.versions.lavender.api.get())
 
 dependencies {
     listOf(
-        "de.honoka.sdk:honoka-kotlin-utils:${Versions.honokaKotlinUtils}"
+        libs.jvm.honoka.kotlin.utils
     ).forEach {
         implementation(it)
         api(it)
