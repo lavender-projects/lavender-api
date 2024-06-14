@@ -24,7 +24,7 @@ jvm-honoka-framework-utils = "1.0.3"
 android-gradle-plugin = { id = "com.android.library", version.ref = "android-gradle-plugin" }
 android-kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "android-kotlin" }
 jvm-kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "jvm-kotlin" }
-kotlin-spring-plugin = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "jvm-kotlin" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "jvm-kotlin" }
 dependency-management = "io.spring.dependency-management:1.0.11.RELEASE"
 
 [libraries]
